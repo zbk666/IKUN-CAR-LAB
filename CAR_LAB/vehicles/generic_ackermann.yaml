@@ -1,0 +1,167 @@
+vehicle:
+  id: generic_ackermann
+  display_name: 通用 · Ackermann 舵机智能车
+  type: 舵机转向 / 后轮驱动
+  order: 20
+transport:
+  type: serial
+  port: COM3
+  baudrate: 115200
+ble:
+  write_uuid: ''
+  notify_uuid: ''
+speed_lab:
+  target_command_key: target_rpm
+  target_key: target_rpm
+  actual_key: actual_rpm
+  error_key: speed_error
+  output_key: motor_pwm
+  params:
+    Kp: speed_kp
+    Ki: speed_ki
+    Kd: speed_kd
+heading_lab:
+  target_command_key: target_yaw
+  target_yaw_key: target_yaw
+  yaw_key: yaw
+  yaw_error_key: yaw_error
+  target_yaw_rate_key: target_yaw_rate
+  yaw_rate_key: gyro_z
+  steering_key: steering_output
+  speed_key: speed
+  outer_params:
+    Kp: heading_kp
+    Ki: heading_ki
+    Kd: heading_kd
+  inner_params:
+    Kp: yaw_rate_kp
+    Ki: yaw_rate_ki
+    Kd: yaw_rate_kd
+pid_loops:
+- key: custom_loop_1
+  name: 自定义环示例（按MCU字段修改）
+  unit: ''
+  target_command_key: custom_target
+  target_key: custom_target
+  feedback_key: custom_feedback
+  error_key: custom_error
+  output_key: custom_output
+  params:
+    Kp: custom_kp
+    Ki: custom_ki
+    Kd: custom_kd
+power_monitor:
+  battery_key: battery
+  raw_key: battery_raw
+  left_current_key: left_current
+  right_current_key: right_current
+  adc_bits: 12
+  vref: 3.3
+  divider_r1: 30000
+  divider_r2: 10000
+  gain: 1.0
+  offset: 0.0
+  warning_voltage: 10.8
+  critical_voltage: 10.2
+track_analysis:
+  speed_key: speed
+  error_key: tracking_error
+  yaw_rate_key: gyro_z
+  battery_key: battery
+  lap_trigger_key: lap_trigger
+  curvature_key: curvature
+  corner_analysis:
+    source: yaw_rate
+    yaw_rate_key: gyro_z
+    curvature_key: curvature
+    speed_key: speed
+    error_key: tracking_error
+    enter_yaw_rate: 15.0
+    exit_yaw_rate: 8.0
+    enter_curvature: 0.080
+    exit_curvature: 0.035
+    enter_hold_ms: 100
+    exit_hold_ms: 150
+    direction_change_hold_ms: 120
+    direction_sign: 1
+parameters:
+- key: speed_kp
+  label: 速度环 Kp
+  default: 0.85
+- key: speed_ki
+  label: 速度环 Ki
+  default: 0.1
+- key: speed_kd
+  label: 速度环 Kd
+  default: 0.01
+- key: heading_kp
+  label: 航向外环 Kp
+  default: 2.4
+- key: heading_ki
+  label: 航向外环 Ki
+  default: 0.0
+- key: heading_kd
+  label: 航向外环 Kd
+  default: 0.12
+- key: yaw_rate_kp
+  label: 角速度内环 Kp
+  default: 0.85
+- key: yaw_rate_ki
+  label: 角速度内环 Ki
+  default: 0.06
+- key: yaw_rate_kd
+  label: 角速度内环 Kd
+  default: 0.01
+- key: custom_kp
+  label: 自定义环 Kp
+  default: 1.0
+- key: custom_ki
+  label: 自定义环 Ki
+  default: 0.0
+- key: custom_kd
+  label: 自定义环 Kd
+  default: 0.0
+- key: left_motor_kp
+  label: 左电机 Kp
+  default: 1.0
+- key: left_motor_ki
+  label: 左电机 Ki
+  default: 0.1
+- key: left_motor_kd
+  label: 左电机 Kd
+  default: 0.0
+- key: right_motor_kp
+  label: 右电机 Kp
+  default: 1.0
+- key: right_motor_ki
+  label: 右电机 Ki
+  default: 0.1
+- key: right_motor_kd
+  label: 右电机 Kd
+  default: 0.0
+- key: steering_kp
+  label: 舵机/转向 Kp
+  default: 1.0
+- key: steering_center
+  label: 舵机中值
+  default: 0.0
+chassis_debug:
+  motors:
+  - key: left_motor
+    label: 左电机
+    rpm_key: left_rpm
+    encoder_key: left_encoder
+    current_key: left_current
+    pwm_key: left_pwm
+    rpm_command_key: left_motor_rpm_target
+    pid_prefix: left_motor
+    expected_encoder_sign: 1
+  - key: right_motor
+    label: 右电机
+    rpm_key: right_rpm
+    encoder_key: right_encoder
+    current_key: right_current
+    pwm_key: right_pwm
+    rpm_command_key: right_motor_rpm_target
+    pid_prefix: right_motor
+    expected_encoder_sign: 1

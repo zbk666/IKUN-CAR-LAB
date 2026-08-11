@@ -1,0 +1,72 @@
+vehicle:
+  id: custom
+  display_name: 自定义车型（模板）
+  type: 自定义 / 插件模板
+  order: 60
+transport:
+  type: serial
+  port: COM3
+  baudrate: 115200
+ble:
+  write_uuid: ''
+  notify_uuid: ''
+# 这是一个空白模板：复制本文件夹改名即可创建新车型。
+# 用「自定义环 -> 专家模式」或直接编辑本文件填写你的 MCU 字段映射。
+speed_lab:
+  target_command_key: target_rpm
+  target_key: target_rpm
+  actual_key: actual_rpm
+  error_key: speed_error
+  output_key: motor_pwm
+  params:
+    Kp: speed_kp
+    Ki: speed_ki
+    Kd: speed_kd
+pid_loops:
+- key: custom_loop_1
+  name: 自定义环1（按MCU字段修改）
+  unit: ''
+  target_command_key: custom_target
+  target_key: custom_target
+  feedback_key: custom_feedback
+  error_key: custom_error
+  output_key: custom_output
+  params:
+    Kp: custom_kp
+    Ki: custom_ki
+    Kd: custom_kd
+power_monitor:
+  battery_key: battery
+  raw_key: battery_raw
+  warning_voltage: 10.8
+  critical_voltage: 10.2
+parameters:
+- key: speed_kp
+  label: 速度环 Kp
+  default: 1.0
+- key: speed_ki
+  label: 速度环 Ki
+  default: 0.0
+- key: speed_kd
+  label: 速度环 Kd
+  default: 0.0
+- key: custom_kp
+  label: 自定义环 Kp
+  default: 1.0
+- key: custom_ki
+  label: 自定义环 Ki
+  default: 0.0
+- key: custom_kd
+  label: 自定义环 Kd
+  default: 0.0
+chassis_debug:
+  motors:
+  - key: motor_a
+    label: 电机 A
+    rpm_key: actual_rpm
+    encoder_key: encoder
+    current_key: motor_current
+    pwm_key: motor_pwm
+    rpm_command_key: target_rpm
+    pid_prefix: speed
+    expected_encoder_sign: 1

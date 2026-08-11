@@ -1,0 +1,4 @@
+First run: double-click START_CAR_LAB.bat
+Later: double-click START_CAR_LAB.bat again.
+The launcher uses ASCII-only BAT text to avoid Windows CMD encoding issues.
+No PyCharm or manual pip commands are required.

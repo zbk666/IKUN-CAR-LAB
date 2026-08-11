@@ -1,0 +1,50 @@
+# ---- Python 虚拟环境（体积巨大，绝不提交）----
+.venv/
+venv/
+env/
+ENV/
+
+# ---- Python 缓存与编译产物 ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ---- 运行时数据 / 日志（每台机器不同，不入库）----
+# 不带斜杠/使用 ** 前缀，确保在任意子目录（如 CAR_LAB/）下也生效
+logs/
+*.log
+*.db
+*.sqlite
+*.sqlite3
+
+# 本地保存的自定义环 / 参数方案（属于用户数据）
+**/data/custom_loops.json
+**/profiles/*/
+
+# 生成的报告
+**/reports/*
+
+# 但保留占位文件，使空目录仍然入库
+!**/.gitkeep
+
+# ---- IDE / 编辑器 ----
+.vscode/
+.idea/
+*.swp
+*~
+
+# ---- 操作系统 ----
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# ---- 打包产物 ----
+*.zip
+*.7z
+*.exe
+!IKUN_Launcher.bat

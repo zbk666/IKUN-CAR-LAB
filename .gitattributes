@@ -1,0 +1,21 @@
+# 默认按文本处理并做换行归一化，避免跨平台 CRLF/LF 混乱
+* text=auto eol=lf
+
+# Windows 批处理保持 CRLF，否则可能无法运行
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# 源码与配置显式声明为文本（UTF-8）
+*.py    text
+*.yaml  text
+*.yml   text
+*.md    text
+*.txt   text
+*.json  text
+
+# 二进制文件不做换行处理，也不参与 diff
+*.png   binary
+*.jpg   binary
+*.ico   binary
+*.db    binary
+*.zip   binary

@@ -1,0 +1,150 @@
+vehicle:
+  id: balance
+  display_name: 通用 · 两轮平衡车
+  type: 两轮自平衡
+  order: 20
+transport:
+  type: serial
+  port: COM3
+  baudrate: 115200
+ble:
+  write_uuid: ''
+  notify_uuid: ''
+# 速度环：控制平衡车前后平均速度。
+speed_lab:
+  target_command_key: cmd_speed
+  target_key: target_speed
+  actual_key: speed
+  error_key: speed_error
+  output_key: velocity_output
+  params:
+    Kp: velocity_kp
+    Ki: velocity_ki
+    Kd: velocity_kd
+# 航向 / 转向环。
+heading_lab:
+  target_command_key: cmd_yaw
+  target_yaw_key: target_yaw
+  yaw_key: yaw
+  yaw_error_key: yaw_error
+  target_yaw_rate_key: target_yaw_rate
+  yaw_rate_key: gyro_z
+  steering_key: turn_output
+  speed_key: speed
+  outer_params:
+    Kp: turn_kp
+    Ki: turn_ki
+    Kd: turn_kd
+  inner_params:
+    Kp: turn_rate_kp
+    Ki: turn_rate_ki
+    Kd: turn_rate_kd
+# 直立环作为“自定义环”：目标俯仰角 -> 车身角度。
+pid_loops:
+- key: upright_loop
+  name: 直立环（角度）
+  unit: "°"
+  target_command_key: cmd_pitch
+  target_key: target_pitch
+  feedback_key: pitch
+  error_key: pitch_error
+  output_key: upright_output
+  params:
+    Kp: upright_kp
+    Ki: upright_ki
+    Kd: upright_kd
+power_monitor:
+  battery_key: battery
+  raw_key: battery_raw
+  left_current_key: left_current
+  right_current_key: right_current
+  warning_voltage: 10.8
+  critical_voltage: 10.2
+parameters:
+- key: upright_kp
+  label: 直立环 Kp
+  default: 320.0
+- key: upright_ki
+  label: 直立环 Ki
+  default: 0.0
+- key: upright_kd
+  label: 直立环 Kd
+  default: 2.2
+- key: velocity_kp
+  label: 速度环 Kp
+  default: 1.1
+- key: velocity_ki
+  label: 速度环 Ki
+  default: 0.02
+- key: velocity_kd
+  label: 速度环 Kd
+  default: 0.0
+- key: turn_kp
+  label: 转向环 Kp
+  default: 1.4
+- key: turn_ki
+  label: 转向环 Ki
+  default: 0.0
+- key: turn_kd
+  label: 转向环 Kd
+  default: 0.05
+- key: turn_rate_kp
+  label: 转向角速度内环 Kp
+  default: 0.6
+- key: turn_rate_ki
+  label: 转向角速度内环 Ki
+  default: 0.0
+- key: turn_rate_kd
+  label: 转向角速度内环 Kd
+  default: 0.0
+- key: left_motor_kp
+  label: 左电机 Kp
+  default: 1.0
+- key: left_motor_ki
+  label: 左电机 Ki
+  default: 0.1
+- key: left_motor_kd
+  label: 左电机 Kd
+  default: 0.0
+- key: right_motor_kp
+  label: 右电机 Kp
+  default: 1.0
+- key: right_motor_ki
+  label: 右电机 Ki
+  default: 0.1
+- key: right_motor_kd
+  label: 右电机 Kd
+  default: 0.0
+channel_names:
+  pitch: 车身俯仰角
+  target_pitch: 目标俯仰角
+  upright_output: 直立环输出
+  velocity_output: 速度环输出
+  turn_output: 转向环输出
+  target_speed: 目标速度
+scope_presets:
+  平衡:
+  - target_pitch
+  - pitch
+  - upright_output
+  - gyro_z
+chassis_debug:
+  motors:
+  - key: left_motor
+    label: 左电机
+    rpm_key: left_rpm
+    encoder_key: left_encoder
+    current_key: left_current
+    pwm_key: left_pwm
+    rpm_command_key: left_motor_rpm_target
+    pid_prefix: left_motor
+    expected_encoder_sign: 1
+  - key: right_motor
+    label: 右电机
+    rpm_key: right_rpm
+    encoder_key: right_encoder
+    current_key: right_current
+    pwm_key: right_pwm
+    rpm_command_key: right_motor_rpm_target
+    pid_prefix: right_motor
+    expected_encoder_sign: 1

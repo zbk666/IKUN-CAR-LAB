@@ -1,0 +1,297 @@
+vehicle:
+  id: mecanum
+  display_name: 通用 · 麦克纳姆轮全向车
+  type: 麦克纳姆轮 / 全向底盘
+  order: 18
+transport:
+  type: serial
+  port: COM3
+  baudrate: 115200
+ble:
+  write_uuid: ''
+  notify_uuid: ''
+# 速度环在 Speed Lab 中直接调底盘前后速度 Vx。
+speed_lab:
+  target_command_key: cmd_vx
+  target_key: target_vx
+  actual_key: vx
+  error_key: vx_error
+  output_key: vx_output
+  params:
+    Kp: vx_kp
+    Ki: vx_ki
+    Kd: vx_kd
+# 航向：外环航向角，内环用底盘旋转角速度 Wz。
+heading_lab:
+  target_command_key: cmd_wz
+  target_yaw_key: target_yaw
+  yaw_key: yaw
+  yaw_error_key: yaw_error
+  target_yaw_rate_key: target_wz
+  yaw_rate_key: wz
+  steering_key: wz_output
+  speed_key: vx
+  outer_params:
+    Kp: heading_kp
+    Ki: heading_ki
+    Kd: heading_kd
+  inner_params:
+    Kp: wz_kp
+    Ki: wz_ki
+    Kd: wz_kd
+# 底盘运动解算层：麦轮专属，目标 vs 实际 Vx / Vy / Wz，方便直接调底盘 PID。
+chassis_motion:
+  hint: 麦克纳姆轮全向底盘：Vx 前后、Vy 横移、Wz 旋转。逆解到 fl/fr/rl/rr 四轮。
+  axes:
+  - key: vx
+    label: 前后速度 Vx
+    unit: m/s
+    command_key: cmd_vx
+    target_key: target_vx
+    actual_key: vx
+    output_key: vx_output
+    params:
+      Kp: vx_kp
+      Ki: vx_ki
+      Kd: vx_kd
+  - key: vy
+    label: 横移速度 Vy
+    unit: m/s
+    command_key: cmd_vy
+    target_key: target_vy
+    actual_key: vy
+    output_key: vy_output
+    params:
+      Kp: vy_kp
+      Ki: vy_ki
+      Kd: vy_kd
+  - key: wz
+    label: 旋转速度 Wz
+    unit: "°/s"
+    command_key: cmd_wz
+    target_key: target_wz
+    actual_key: wz
+    output_key: wz_output
+    params:
+      Kp: wz_kp
+      Ki: wz_ki
+      Kd: wz_kd
+pid_loops:
+- key: custom_loop_1
+  name: 自定义环示例（按MCU字段修改）
+  unit: ''
+  target_command_key: custom_target
+  target_key: custom_target
+  feedback_key: custom_feedback
+  error_key: custom_error
+  output_key: custom_output
+  params:
+    Kp: custom_kp
+    Ki: custom_ki
+    Kd: custom_kd
+power_monitor:
+  battery_key: battery
+  raw_key: battery_raw
+  left_current_key: fl_current
+  right_current_key: fr_current
+  adc_bits: 12
+  vref: 3.3
+  divider_r1: 30000
+  divider_r2: 10000
+  gain: 1.0
+  offset: 0.0
+  warning_voltage: 10.8
+  critical_voltage: 10.2
+track_analysis:
+  speed_key: vx
+  error_key: tracking_error
+  yaw_rate_key: wz
+  battery_key: battery
+  lap_trigger_key: lap_trigger
+  curvature_key: curvature
+  corner_analysis:
+    source: yaw_rate
+    yaw_rate_key: wz
+    curvature_key: curvature
+    speed_key: vx
+    error_key: tracking_error
+    enter_yaw_rate: 15.0
+    exit_yaw_rate: 8.0
+    enter_curvature: 0.080
+    exit_curvature: 0.035
+    enter_hold_ms: 100
+    exit_hold_ms: 150
+    direction_change_hold_ms: 120
+    direction_sign: 1
+# 麦轮专属示波器工作组：不用再自己找数据。
+scope_presets:
+  麦轮运动:
+  - target_vx
+  - vx
+  - target_vy
+  - vy
+  - target_wz
+  - wz
+  - fl_rpm
+  - fr_rpm
+  - rl_rpm
+  - rr_rpm
+  - fl_pwm
+  - fr_pwm
+  - rl_pwm
+  - rr_pwm
+  - fl_current
+  - fr_current
+  - rl_current
+  - rr_current
+  四轮RPM:
+  - fl_rpm
+  - fr_rpm
+  - rl_rpm
+  - rr_rpm
+channel_names:
+  target_vx: 目标 Vx
+  vx: 实际 Vx
+  target_vy: 目标 Vy
+  vy: 实际 Vy
+  target_wz: 目标 Wz
+  wz: 实际 Wz
+  vx_output: Vx 输出
+  vy_output: Vy 输出
+  wz_output: Wz 输出
+  fl_rpm: 左前轮 RPM
+  fr_rpm: 右前轮 RPM
+  rl_rpm: 左后轮 RPM
+  rr_rpm: 右后轮 RPM
+  fl_pwm: 左前轮 PWM
+  fr_pwm: 右前轮 PWM
+  rl_pwm: 左后轮 PWM
+  rr_pwm: 右后轮 PWM
+  fl_current: 左前轮电流
+  fr_current: 右前轮电流
+  rl_current: 左后轮电流
+  rr_current: 右后轮电流
+  fl_encoder: 左前编码器
+  fr_encoder: 右前编码器
+  rl_encoder: 左后编码器
+  rr_encoder: 右后编码器
+parameters:
+- key: vx_kp
+  label: Vx 前后速度环 Kp
+  default: 1.2
+- key: vx_ki
+  label: Vx 前后速度环 Ki
+  default: 0.15
+- key: vx_kd
+  label: Vx 前后速度环 Kd
+  default: 0.02
+- key: vy_kp
+  label: Vy 横移速度环 Kp
+  default: 1.2
+- key: vy_ki
+  label: Vy 横移速度环 Ki
+  default: 0.15
+- key: vy_kd
+  label: Vy 横移速度环 Kd
+  default: 0.02
+- key: wz_kp
+  label: Wz 旋转速度环 Kp
+  default: 0.9
+- key: wz_ki
+  label: Wz 旋转速度环 Ki
+  default: 0.08
+- key: wz_kd
+  label: Wz 旋转速度环 Kd
+  default: 0.01
+- key: heading_kp
+  label: 航向外环 Kp
+  default: 2.4
+- key: heading_ki
+  label: 航向外环 Ki
+  default: 0.0
+- key: heading_kd
+  label: 航向外环 Kd
+  default: 0.12
+- key: custom_kp
+  label: 自定义环 Kp
+  default: 1.0
+- key: custom_ki
+  label: 自定义环 Ki
+  default: 0.0
+- key: custom_kd
+  label: 自定义环 Kd
+  default: 0.0
+- key: fl_kp
+  label: 左前轮 Kp
+  default: 1.0
+- key: fl_ki
+  label: 左前轮 Ki
+  default: 0.1
+- key: fl_kd
+  label: 左前轮 Kd
+  default: 0.0
+- key: fr_kp
+  label: 右前轮 Kp
+  default: 1.0
+- key: fr_ki
+  label: 右前轮 Ki
+  default: 0.1
+- key: fr_kd
+  label: 右前轮 Kd
+  default: 0.0
+- key: rl_kp
+  label: 左后轮 Kp
+  default: 1.0
+- key: rl_ki
+  label: 左后轮 Ki
+  default: 0.1
+- key: rl_kd
+  label: 左后轮 Kd
+  default: 0.0
+- key: rr_kp
+  label: 右后轮 Kp
+  default: 1.0
+- key: rr_ki
+  label: 右后轮 Ki
+  default: 0.1
+- key: rr_kd
+  label: 右后轮 Kd
+  default: 0.0
+chassis_debug:
+  motors:
+  - key: fl_motor
+    label: 左前轮 FL
+    rpm_key: fl_rpm
+    encoder_key: fl_encoder
+    current_key: fl_current
+    pwm_key: fl_pwm
+    rpm_command_key: fl_rpm_target
+    pid_prefix: fl
+    expected_encoder_sign: 1
+  - key: fr_motor
+    label: 右前轮 FR
+    rpm_key: fr_rpm
+    encoder_key: fr_encoder
+    current_key: fr_current
+    pwm_key: fr_pwm
+    rpm_command_key: fr_rpm_target
+    pid_prefix: fr
+    expected_encoder_sign: 1
+  - key: rl_motor
+    label: 左后轮 RL
+    rpm_key: rl_rpm
+    encoder_key: rl_encoder
+    current_key: rl_current
+    pwm_key: rl_pwm
+    rpm_command_key: rl_rpm_target
+    pid_prefix: rl
+    expected_encoder_sign: 1
+  - key: rr_motor
+    label: 右后轮 RR
+    rpm_key: rr_rpm
+    encoder_key: rr_encoder
+    current_key: rr_current
+    pwm_key: rr_pwm
+    rpm_command_key: rr_rpm_target
+    pid_prefix: rr
+    expected_encoder_sign: 1

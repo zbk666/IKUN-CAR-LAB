@@ -1,0 +1,139 @@
+vehicle:
+  id: servo_tracker
+  display_name: 通用 · 舵机循迹车
+  type: 舵机转向 / 循迹
+  order: 22
+transport:
+  type: serial
+  port: COM3
+  baudrate: 115200
+ble:
+  write_uuid: ''
+  notify_uuid: ''
+# 速度环：驱动电机速度。
+speed_lab:
+  target_command_key: target_rpm
+  target_key: target_rpm
+  actual_key: actual_rpm
+  error_key: speed_error
+  output_key: motor_pwm
+  params:
+    Kp: speed_kp
+    Ki: speed_ki
+    Kd: speed_kd
+# 循迹环：以循迹误差为外环，舵机角度为输出。
+heading_lab:
+  target_command_key: cmd_track
+  target_yaw_key: target_line
+  yaw_key: line_position
+  yaw_error_key: tracking_error
+  target_yaw_rate_key: target_yaw_rate
+  yaw_rate_key: gyro_z
+  steering_key: servo_angle
+  speed_key: speed
+  outer_params:
+    Kp: track_kp
+    Ki: track_ki
+    Kd: track_kd
+  inner_params:
+    Kp: yaw_rate_kp
+    Ki: yaw_rate_ki
+    Kd: yaw_rate_kd
+pid_loops:
+- key: servo_loop
+  name: 舵机循迹环
+  unit: ''
+  target_command_key: cmd_track
+  target_key: target_line
+  feedback_key: line_position
+  error_key: tracking_error
+  output_key: servo_angle
+  params:
+    Kp: track_kp
+    Ki: track_ki
+    Kd: track_kd
+power_monitor:
+  battery_key: battery
+  raw_key: battery_raw
+  left_current_key: motor_current
+  right_current_key: servo_current
+  warning_voltage: 6.6
+  critical_voltage: 6.0
+track_analysis:
+  speed_key: speed
+  error_key: tracking_error
+  yaw_rate_key: gyro_z
+  battery_key: battery
+  lap_trigger_key: lap_trigger
+  curvature_key: curvature
+  corner_analysis:
+    source: yaw_rate
+    yaw_rate_key: gyro_z
+    curvature_key: curvature
+    speed_key: speed
+    error_key: tracking_error
+    enter_yaw_rate: 15.0
+    exit_yaw_rate: 8.0
+    enter_curvature: 0.080
+    exit_curvature: 0.035
+    enter_hold_ms: 100
+    exit_hold_ms: 150
+    direction_change_hold_ms: 120
+    direction_sign: 1
+parameters:
+- key: speed_kp
+  label: 速度环 Kp
+  default: 0.85
+- key: speed_ki
+  label: 速度环 Ki
+  default: 0.1
+- key: speed_kd
+  label: 速度环 Kd
+  default: 0.01
+- key: track_kp
+  label: 循迹环 Kp
+  default: 1.8
+- key: track_ki
+  label: 循迹环 Ki
+  default: 0.0
+- key: track_kd
+  label: 循迹环 Kd
+  default: 0.25
+- key: yaw_rate_kp
+  label: 角速度内环 Kp
+  default: 0.6
+- key: yaw_rate_ki
+  label: 角速度内环 Ki
+  default: 0.0
+- key: yaw_rate_kd
+  label: 角速度内环 Kd
+  default: 0.0
+- key: servo_center
+  label: 舵机中位
+  default: 90.0
+- key: servo_limit
+  label: 舵机限幅(±)
+  default: 35.0
+channel_names:
+  line_position: 循迹传感器位置
+  target_line: 目标循迹中线
+  servo_angle: 舵机角度
+  motor_current: 驱动电机电流
+  servo_current: 舵机电流
+scope_presets:
+  循迹:
+  - target_line
+  - line_position
+  - tracking_error
+  - servo_angle
+chassis_debug:
+  motors:
+  - key: drive_motor
+    label: 驱动电机
+    rpm_key: actual_rpm
+    encoder_key: encoder
+    current_key: motor_current
+    pwm_key: motor_pwm
+    rpm_command_key: target_rpm
+    pid_prefix: speed
+    expected_encoder_sign: 1
