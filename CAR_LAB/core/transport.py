@@ -90,6 +90,10 @@ class TransportManager(QObject):
             "custom_feedback": 0.0,
             "custom_output": 0.0,
             "custom_i": 0.0,
+            # 麦克纳姆轮全向底盘：目标(cmd) / 实际(vx,vy,wz) 与四轮编码器累计
+            "cmd_vx": 0.0, "cmd_vy": 0.0, "cmd_wz": 0.0,
+            "vx": 0.0, "vy": 0.0, "wz": 0.0,
+            "fl_encoder": 0.0, "fr_encoder": 0.0, "rl_encoder": 0.0, "rr_encoder": 0.0,
             "params": {
                 "speed_kp": 0.85, "speed_ki": 0.10, "speed_kd": 0.01,
                 "heading_kp": 2.4, "heading_ki": 0.0, "heading_kd": 0.12,
@@ -97,6 +101,9 @@ class TransportManager(QObject):
                 "left_motor_kp": 1.0, "left_motor_ki": 0.1, "left_motor_kd": 0.0,
                 "right_motor_kp": 1.0, "right_motor_ki": 0.1, "right_motor_kd": 0.0,
                 "custom_kp": 1.2, "custom_ki": 0.08, "custom_kd": 0.0,
+                "vx_kp": 1.2, "vx_ki": 0.15, "vx_kd": 0.02,
+                "vy_kp": 1.2, "vy_ki": 0.15, "vy_kd": 0.02,
+                "wz_kp": 0.9, "wz_ki": 0.08, "wz_kd": 0.01,
             },
             "speed_i": 0.0,
             "yaw_i": 0.0,
@@ -376,11 +383,14 @@ class TransportManager(QObject):
                 self.sim["target_yaw"] = wrap_deg(float(value))
             elif key == "custom_target":
                 self.sim["custom_target"] = float(value)
+            elif key in ("cmd_vx", "cmd_vy", "cmd_wz"):
+                self.sim[key] = float(value)
             elif key == "save_parameters":
                 pass
             elif key == "emergency_stop":
                 self.sim["target_rpm"] = 0.0
                 self.sim["motor_pwm"] = 0.0
+                self.sim["cmd_vx"] = self.sim["cmd_vy"] = self.sim["cmd_wz"] = 0.0
             elif key.endswith("motor"):
                 self.sim["motor_pwm"] = float(value)
             self._emit_sim_obj({"type": "ACK", "key": key, "value": value})
@@ -438,6 +448,31 @@ class TransportManager(QObject):
         curvature = _virtual_track_curvature(s["track_progress"])
         tracking_error = 0.012 * math.sin(time.monotonic()*2.3) + 0.0008*abs(s["steering_output"])
 
+        # 麦克纳姆轮全向底盘：cmd_* 目标一阶跟随出实际 Vx/Vy/Wz，再逆运动学到四轮。
+        for axis, tau in (("vx", 0.18), ("vy", 0.18), ("wz", 0.14)):
+            s[axis] += (s["cmd_" + axis] - s[axis]) * dt / tau
+        vx, vy, wz = s["vx"], s["vy"], s["wz"]
+        wz_rad = math.radians(wz)
+        L = 0.30                      # 半轴距+半轮距之和 (lx+ly)，示意值
+        k_rpm = 60.0 / (2 * math.pi * 0.03)   # 轮线速度(m/s) -> rpm，轮半径 0.03m
+        fl_rpm = (vx - vy - wz_rad * L) * k_rpm
+        fr_rpm = (vx + vy + wz_rad * L) * k_rpm
+        rl_rpm = (vx + vy - wz_rad * L) * k_rpm
+        rr_rpm = (vx - vy + wz_rad * L) * k_rpm
+        max_rpm = 350.0
+        for name, rpm in (("fl", fl_rpm), ("fr", fr_rpm), ("rl", rl_rpm), ("rr", rr_rpm)):
+            s[name + "_encoder"] += rpm / 60.0 * 1024.0 * dt
+
+        def _axis_out(axis, actual):
+            err = s["cmd_" + axis] - actual
+            return max(-100.0, min(100.0, p.get(axis + "_kp", 1.0) * err * 10.0))
+
+        def _pwm(rpm):
+            return max(-100.0, min(100.0, rpm / max_rpm * 100.0))
+
+        def _cur(rpm):
+            return round(0.30 + abs(rpm) / max_rpm * 2.2, 3)
+
         tel = {
             "target_rpm": round(s["target_rpm"], 3),
             "actual_rpm": round(s["actual_rpm"], 3),
@@ -486,4 +521,21 @@ class TransportManager(QObject):
             "custom_error": round(custom_err, 4),
             "custom_output": round(s["custom_output"], 4),
         }
+        # 麦轮遥测：底盘运动解算层 + 四轮 rpm/pwm/current/encoder
+        tel.update({
+            "target_vx": round(s["cmd_vx"], 4), "vx": round(vx, 4),
+            "target_vy": round(s["cmd_vy"], 4), "vy": round(vy, 4),
+            "target_wz": round(s["cmd_wz"], 3), "wz": round(wz, 3),
+            "vx_error": round(s["cmd_vx"] - vx, 4), "vx_output": round(_axis_out("vx", vx), 3),
+            "vy_error": round(s["cmd_vy"] - vy, 4), "vy_output": round(_axis_out("vy", vy), 3),
+            "wz_error": round(s["cmd_wz"] - wz, 3), "wz_output": round(_axis_out("wz", wz), 3),
+            "fl_rpm": round(fl_rpm, 2), "fr_rpm": round(fr_rpm, 2),
+            "rl_rpm": round(rl_rpm, 2), "rr_rpm": round(rr_rpm, 2),
+            "fl_pwm": round(_pwm(fl_rpm), 2), "fr_pwm": round(_pwm(fr_rpm), 2),
+            "rl_pwm": round(_pwm(rl_rpm), 2), "rr_pwm": round(_pwm(rr_rpm), 2),
+            "fl_current": _cur(fl_rpm), "fr_current": _cur(fr_rpm),
+            "rl_current": _cur(rl_rpm), "rr_current": _cur(rr_rpm),
+            "fl_encoder": int(s["fl_encoder"]), "fr_encoder": int(s["fr_encoder"]),
+            "rl_encoder": int(s["rl_encoder"]), "rr_encoder": int(s["rr_encoder"]),
+        })
         self._emit_sim_obj({"type": "TEL", "data": tel})

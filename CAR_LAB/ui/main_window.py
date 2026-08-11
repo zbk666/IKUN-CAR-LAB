@@ -20,6 +20,7 @@ from ui.protocol_monitor import ProtocolMonitor
 from ui.msp_assistant import MspAssistant
 from ui.ai_tuner import AITunerPage
 from ui.chassis_debug import ChassisDebugPage
+from ui.chassis_motion import ChassisMotionPage
 from ui.experiment_history import ExperimentHistoryPage
 from ui.diagnostics import DiagnosticsPage
 from ui.theme import THEME_STYLES, apply_plot_theme, make_ikun_icon
@@ -39,6 +40,7 @@ PAGE_DEFS = [
         ("电源监控", "ADC、电池电压与电流", PowerMonitor),
         ("单电机实验", "单轮 PWM / RPM / 编码器", MotorLab),
         ("底盘调试", "多电机与 IMU 检查", ChassisDebugPage),
+        ("麦轮运动", "全向底盘 Vx/Vy/Wz 目标 vs 实际 + PID", ChassisMotionPage),
     ]),
     ("参数与赛道", [
         ("全部参数", "统一读写 MCU 参数", ParametersPage),
@@ -63,7 +65,7 @@ class MainWindow(QMainWindow):
         self.theme_name = self.settings.value("theme", "白色")
         if self.theme_name not in THEME_STYLES:
             self.theme_name = "白色"
-        self.setWindowTitle("IKUN · CAR LAB v1.6.0")
+        self.setWindowTitle("IKUN · CAR LAB v1.6.1")
         self.setMinimumSize(1180, 760)
         self.resize(1500, 900)
         self.setStyleSheet(THEME_STYLES[self.theme_name])
@@ -100,7 +102,7 @@ class MainWindow(QMainWindow):
         row1 = QHBoxLayout()
         brand = QVBoxLayout(); brand.setSpacing(0)
         title = QLabel("IKUN"); title.setObjectName("brandIKUN")
-        sub = QLabel("CAR LAB · v1.6.0 · Unified Vehicle Tuning Workbench"); sub.setObjectName("subtitle")
+        sub = QLabel("CAR LAB · v1.6.1 · Unified Vehicle Tuning Workbench"); sub.setObjectName("subtitle")
         brand.addWidget(title); brand.addWidget(sub)
         row1.addLayout(brand); row1.addStretch(1)
         row1.addWidget(QLabel("主题"))
@@ -112,7 +114,7 @@ class MainWindow(QMainWindow):
         quick = QLabel("调车工作区")
         quick.setObjectName("muted")
         row1.addWidget(quick)
-        for text, idx in [("速度", 2), ("航向", 3), ("示波器", 1), ("弯道", 11)]:
+        for text, idx in [("速度", 2), ("航向", 3), ("示波器", 1), ("弯道", 12)]:
             b=QPushButton(text); b.setFixedHeight(28)
             b.clicked.connect(lambda _=False,i=idx:self._select_page(i))
             row1.addWidget(b)

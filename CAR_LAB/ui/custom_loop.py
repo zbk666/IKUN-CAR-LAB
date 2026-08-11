@@ -1,6 +1,6 @@
 
 from collections import deque
-import json, time
+import json, sys, time
 from pathlib import Path
 import pyqtgraph as pg
 from PySide6.QtCore import QTimer
@@ -28,7 +28,30 @@ class CustomLoopLab(QWidget):
         self.expert_mode=False
         self._build(); self._fill_loop_combo(); self._load_loop(0)
         bus.telemetry.connect(self._tel); bus.ack.connect(self._ack); bus.parameter_sync.connect(self._sync)
+        bus.ack_detail.connect(self._comm_ack)
         timer=QTimer(self); timer.timeout.connect(self._draw); timer.start(50)
+
+    def _comm_get(self):
+        k=self.comm_key.text().strip()
+        if k: self.transport.get_param(k); self.comm_ack.setText(f"已请求 GET {k} …")
+
+    def _comm_set(self):
+        k=self.comm_key.text().strip(); v=self.comm_val.text().strip()
+        if not k: return
+        try: val=float(v)
+        except ValueError:
+            self.comm_ack.setText("SET 需要数值；非数值请用 RAW 发送"); return
+        self.transport.set_param(k,val); self.comm_ack.setText(f"已发送 SET {k} = {val:g} …")
+
+    def _comm_raw(self):
+        try: self.transport.send_obj(json.loads(self.comm_raw.text()))
+        except Exception as e: self.comm_ack.setText(f"RAW 错误：{e}")
+
+    def _comm_ack(self, detail):
+        self.comm_ack.setText(
+            f"ACK：{detail.get('key')} = {detail.get('value')}  "
+            f"ok={detail.get('ok')}  seq={detail.get('seq')}"
+        )
 
     @staticmethod
     def _blank_loop():
@@ -39,7 +62,9 @@ class CustomLoopLab(QWidget):
             if self.store_path.exists():
                 d=json.loads(self.store_path.read_text(encoding="utf-8"))
                 return d if isinstance(d,list) else []
-        except Exception: pass
+        except Exception as e:
+            # 别静默：本地自定义环损坏时打到 stderr（会进 logs/launcher.log），否则用户会以为环凭空消失。
+            print(f"[CAR_LAB] 读取本地自定义环失败 {self.store_path}: {e}", file=sys.stderr)
         return []
 
     def _build(self):
@@ -83,6 +108,21 @@ class CustomLoopLab(QWidget):
             self.spins[label]=sp
         self.step.currentTextChanged.connect(self._step_changed); self._step_changed(self.step.currentText())
         left.addWidget(target_box)
+
+        # 专家模式 · 通信：直接对 MCU 字段收发 GET/SET，查看 ACK，发送 RAW JSON。
+        comm=QGroupBox("通信（专家）· GET / SET / ACK / RAW"); cg=QGridLayout(comm)
+        self.comm_key=QLineEdit(); self.comm_key.setPlaceholderText("字段 key，如 speed_kp / target_rpm")
+        self.comm_val=QLineEdit(); self.comm_val.setPlaceholderText("SET 数值")
+        get_btn=QPushButton("GET"); set_btn=QPushButton("SET")
+        get_btn.clicked.connect(self._comm_get); set_btn.clicked.connect(self._comm_set)
+        cg.addWidget(QLabel("字段 key"),0,0); cg.addWidget(self.comm_key,0,1,1,2); cg.addWidget(get_btn,0,3)
+        cg.addWidget(QLabel("值"),1,0); cg.addWidget(self.comm_val,1,1,1,2); cg.addWidget(set_btn,1,3)
+        self.comm_ack=QLabel("ACK：--"); self.comm_ack.setWordWrap(True); cg.addWidget(self.comm_ack,2,0,1,4)
+        self.comm_raw=QLineEdit('{"type":"GET","key":"speed_kp"}'); raw_btn=QPushButton("发送 RAW")
+        raw_btn.clicked.connect(self._comm_raw)
+        cg.addWidget(QLabel("RAW JSON"),3,0); cg.addWidget(self.comm_raw,3,1,1,2); cg.addWidget(raw_btn,3,3)
+        left.addWidget(comm); self.expert_widgets.append(comm)
+
         self.status=QLabel("参数状态：待命"); self.status.setWordWrap(True); left.addWidget(self.status)
         self.log=QPlainTextEdit(); self.log.setReadOnly(True); self.log.setMaximumBlockCount(150); left.addWidget(self.log,1)
         root.addLayout(left,0)

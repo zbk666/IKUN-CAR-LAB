@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 import yaml
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QWidget,QVBoxLayout,QHBoxLayout,QLineEdit,QPushButton,QComboBox,QPlainTextEdit,QMessageBox
@@ -21,7 +22,12 @@ class ProfileManager(QWidget):
         p=self.dir/(self.combo.currentText()+".yaml")
         if not p.exists():return
         obj=yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+        failed=[]
         for k,v in (obj.get("parameters") or {}).items():
             try:self.transport.set_param(k,float(v))
-            except Exception:pass
-        QMessageBox.information(self,"参数方案","已开始下发；请在 ACK/协议监视器确认全部参数生效。")
+            except Exception as e:failed.append(f"{k}={v}（{e}）")
+        if failed:
+            print("[CAR_LAB] 参数方案下发失败: "+"; ".join(failed),file=sys.stderr)
+            QMessageBox.warning(self,"参数方案","以下参数未能下发（已跳过，其余已开始下发）：\n"+"\n".join(failed))
+        else:
+            QMessageBox.information(self,"参数方案","已开始下发；请在 ACK/协议监视器确认全部参数生效。")

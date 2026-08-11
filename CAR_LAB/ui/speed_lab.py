@@ -16,7 +16,7 @@ class SpeedLab(QWidget):
         g=QGroupBox("速度目标"); grid=QGridLayout(g)
         self.target=QDoubleSpinBox(); self.target.setRange(-10000,10000); self.target.setDecimals(1); self.target.setValue(500)
         b=QPushButton("发送目标 RPM"); b.clicked.connect(lambda:self.transport.command(self.cfg.get("target_command_key","target_rpm"),self.target.value()))
-        grid.addWidget(QLabel("Target RPM"),0,0); grid.addWidget(self.target,0,1); grid.addWidget(b,1,0,1,2); left.addWidget(g)
+        grid.addWidget(QLabel("目标 RPM"),0,0); grid.addWidget(self.target,0,1); grid.addWidget(b,1,0,1,2); left.addWidget(g)
         pgp=QGroupBox("在线 PID · 改完立即生效"); pid_grid=QGridLayout(pgp)
         self.step=QComboBox(); self.step.addItems(["0.001","0.01","0.1","1"]); self.step.setCurrentText("0.01"); self.step.currentTextChanged.connect(self._step)
         self.auto=QCheckBox("立即发送"); self.auto.setChecked(True)
@@ -33,12 +33,12 @@ class SpeedLab(QWidget):
             pid_grid.addWidget(QLabel(label),r,0); pid_grid.addWidget(minus,r,1); pid_grid.addWidget(sp,r,2); pid_grid.addWidget(plus,r,3); self.spins[label]=(sp,key)
         left.addWidget(pgp)
         self.sync=QLabel("参数状态：待命"); left.addWidget(self.sync)
-        self.metrics=QLabel("当前：Target -- | Actual -- | Error -- | Output --"); self.metrics.setWordWrap(True); left.addWidget(self.metrics)
+        self.metrics=QLabel("当前：目标 -- | 实际 -- | 误差 -- | 输出 --"); self.metrics.setWordWrap(True); left.addWidget(self.metrics)
         self.log=QPlainTextEdit(); self.log.setReadOnly(True); self.log.setMaximumBlockCount(120); left.addWidget(self.log,1)
         root.addLayout(left,0)
 
         right=QVBoxLayout()
-        self.p1=pg.PlotWidget(title="速度跟踪 · Target / Actual"); self.p1.showGrid(x=True,y=True,alpha=.18); self.p1.addLegend(); self.c_target=self.p1.plot(name="Target",pen=pg.mkPen((40,100,210),width=2)); self.c_actual=self.p1.plot(name="Actual",pen=pg.mkPen((220,130,40),width=2))
+        self.p1=pg.PlotWidget(title="速度跟踪 · 目标 / 实际"); self.p1.showGrid(x=True,y=True,alpha=.18); self.p1.addLegend(); self.c_target=self.p1.plot(name="目标",pen=pg.mkPen((40,100,210),width=2)); self.c_actual=self.p1.plot(name="实际",pen=pg.mkPen((220,130,40),width=2))
         self.p2=pg.PlotWidget(title="误差（局部自动放大）"); self.p2.showGrid(x=True,y=True,alpha=.18); self.c_error=self.p2.plot(name="Error",pen=pg.mkPen((200,70,70),width=2))
         right.addWidget(self.p1,1); right.addWidget(self.p2,1); root.addLayout(right,1)
 
@@ -67,7 +67,7 @@ class SpeedLab(QWidget):
         target=float(d.get(self.cfg.get("target_key","target_rpm"),0)); actual=float(d.get(self.cfg.get("actual_key","actual_rpm"),0))
         error=float(d.get(self.cfg.get("error_key","speed_error"),target-actual)); out=float(d.get(self.cfg.get("output_key","motor_pwm"),0))
         for k,v in [("target",target),("actual",actual),("error",error),("output",out)]: self.series[k].append(v)
-        self.metrics.setText(f"当前：Target {target:.1f} | Actual {actual:.1f} | Error {error:.1f} | Output {out:.1f}")
+        self.metrics.setText(f"当前：目标 {target:.1f} | 实际 {actual:.1f} | 误差 {error:.1f} | 输出 {out:.1f}")
     def _draw(self):
         x=list(self.t)
         if not x:return

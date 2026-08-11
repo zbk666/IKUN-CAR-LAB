@@ -9,7 +9,7 @@ from ui.main_window import MainWindow
 
 def main():
     app=QApplication(sys.argv)
-    app.setApplicationName("IKUN CAR LAB v1.6.0")
+    app.setApplicationName("IKUN CAR LAB v1.6.1")
 
     checks=run_startup_checks()
     ok, report=format_checks(checks)
