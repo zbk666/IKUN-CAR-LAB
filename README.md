@@ -26,9 +26,11 @@
 
 车型由 `CAR_LAB/vehicles/` 下的 YAML 描述，切换车型自动重新加载字段映射与连接默认值：
 
-通用两轮差速、通用四电机差速、Ackermann 舵机转向、MSPM0 / MSP430 / STM32 双电机、ESP32 Wi‑Fi、BLE 无线车、双/四电机仿真车。
+通用两轮差速、通用四电机差速、Ackermann 舵机转向、**麦克纳姆轮全向车**、**两轮平衡车**、**舵机循迹车**、MSPM0 / MSP430 / STM32 双电机、ESP32 Wi‑Fi、BLE 无线车、双/四电机仿真车，以及**自定义车型模板**。
 
-> 🔭 路线图 v1.6.1：恢复**麦克纳姆轮车**（FL/FR/RL/RR + Vx/Vy/Wz 底盘解算与专属示波器工作组）、**两轮平衡车**、**舵机循迹车**，并将车型系统改为**插件化目录**（`vehicles/<name>/config.yaml`，加一个文件夹即新增一个车型）。详见 [CHANGELOG.md](CHANGELOG.md)。
+> **麦轮专属支持**：电机层 FL/FR/RL/RR（`fl_rpm`/`fr_rpm`/`rl_rpm`/`rr_rpm`）、底盘运动解算层 Vx/Vy/Wz（目标 + 实际，方便直接调底盘 PID）、示波器「麦轮运动」专属工作组。
+
+**车型插件化**：既支持旧的扁平文件 `vehicles/<name>.yaml`，也支持插件目录 `vehicles/<name>/config.yaml`——**新增一个车型只需加一个文件夹**，不会因为加功能而丢车型。字段含义与贡献步骤见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## 📦 环境要求
 
@@ -82,7 +84,7 @@ CAR_LAB_v1.6_Launcher_Release/
 │   ├── main.py               # 程序入口
 │   ├── core/                 # 数据总线、协议、传输(串口/BLE/TCP/仿真)、配置、分析
 │   ├── ui/                   # 各功能页面（示波器、Speed/Heading Lab、赛道工程…）
-│   ├── vehicles/*.yaml       # 车型模板（字段映射 / 参数 / 底盘布局）
+│   ├── vehicles/             # 车型（扁平 *.yaml 或插件目录 <name>/config.yaml）
 │   ├── docs/                 # 各版本说明与 MCU 通信协议手册
 │   └── requirements.txt
 ├── LICENSE

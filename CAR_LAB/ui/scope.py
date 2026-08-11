@@ -105,6 +105,9 @@ class ScopePage(QWidget):
         self.t=deque(maxlen=6000); self.data={}; self.channels=[]
         self.t0=time.monotonic(); self.freeze=False
         self.cursor_a=None; self.cursor_b=None; self.overlay_lines=[]
+        # 持久曲线：每个通道一个 PlotDataItem，只更新数据而不是每帧重建，多通道下更省 CPU。
+        self._palette=[(45,108,210),(220,135,40),(190,65,75),(40,155,100),(125,80,180),(40,155,165)]
+        self._curves={}; self._color_idx={}; self._next_color=0
         root=QVBoxLayout(self); root.setContentsMargins(8,8,8,8); root.setSpacing(8)
 
         top=QHBoxLayout()
@@ -126,7 +129,7 @@ class ScopePage(QWidget):
 
         center=QVBoxLayout()
         self.plot=pg.PlotWidget(title="实时示波器")
-        self.plot.showGrid(x=True,y=True,alpha=.18); self.plot.addLegend(); self.plot.setLabel("bottom","时间",units="s")
+        self.plot.showGrid(x=True,y=True,alpha=.18); self.legend=self.plot.addLegend(); self.plot.setLabel("bottom","时间",units="s")
         self.plot.setLabel("left","数值")
         self.plot.scene().sigMouseMoved.connect(self._mouse_moved)
         self.plot.scene().sigMouseClicked.connect(self._mouse_clicked)
@@ -199,16 +202,29 @@ class ScopePage(QWidget):
         vals=list(self.data.get(k,[])); ts=list(self.t); n=min(len(vals),len(ts))
         return ts[-n:], vals[-n:]
 
+    def _color_for(self,k):
+        if k not in self._color_idx:
+            self._color_idx[k]=self._next_color%len(self._palette); self._next_color+=1
+        return self._palette[self._color_idx[k]]
+
     def _draw(self):
         if self.freeze:return
-        self.plot.clear(); self.plot.addLegend()
-        palette=[(45,108,210),(220,135,40),(190,65,75),(40,155,100),(125,80,180),(40,155,165)]
-        selected=self._selected(); all_vals=[]
-        for i,k in enumerate(selected):
+        selected=self._selected(); selset=set(selected)
+        # 移除不再选中的曲线（连同图例项）
+        for k in list(self._curves):
+            if k not in selset:
+                try:self.plot.removeItem(self._curves[k])
+                except Exception:pass
+                del self._curves[k]
+        all_vals=[]
+        for k in selected:
             x,y=self._times_values(k)
-            if not x:continue
-            self.plot.plot(x,y,name=self._cname(k),pen=pg.mkPen(palette[i%len(palette)],width=2))
-            all_vals.extend(y[-1500:])
+            curve=self._curves.get(k)
+            if curve is None:
+                curve=self.plot.plot([],[],name=self._cname(k),pen=pg.mkPen(self._color_for(k),width=2))
+                self._curves[k]=curve
+            curve.setData(x,y)
+            if y:all_vals.extend(y[-1500:])
         if self.auto_y and all_vals:
             lo=min(all_vals); hi=max(all_vals)
             if self.scale_mode=="局部":
